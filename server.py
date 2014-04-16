@@ -89,7 +89,7 @@ def display_participant(number):
         else:
             return 'unknown phone number'
     else: # password = economics
-        if request.form['pwd'] == 'economics':
+        if request.form['pwd'] == config_vars.interface_pwd:
             if 'edit' in request.form: # show the edit form
                 return render_template('edit-participant.html', number=number)
             elif 'verification' in request.form: # send verification text
@@ -125,7 +125,7 @@ def new_participant():
     if request.method == 'GET':
         return render_template('new-participant.html')
     else: # password = economics
-        if request.form['pwd'] == 'economics':
+        if request.form['pwd'] == config_vars.interface_pwd:
             # create new participant
             lab_day = valid_time(request.form['lab_day'])
             money_day = valid_time(request.form['money_day'])
@@ -174,7 +174,7 @@ def send_email():
     if request.method == 'GET':
         return render_template('send-email.html')
     else:
-        if request.form['pwd'] == 'economics':
+        if request.form['pwd'] == config_vars.interface_pwd:
             time = datetime.strptime(request.form['time'],'%Y-%m-%d %H:%M')
             when = datetime(year=time.year, month=time.month, day=time.day, hour=time.hour, minute=time.minute, tzinfo=est)
             email.email(when,request.form['email'],'the_url')

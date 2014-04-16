@@ -27,15 +27,16 @@ How to run
   	gmail_subject  
   	gmail_user  
   	gmail_pwd  
-
+  	interface_pwd   
+  
 3. Set twilio account information:  
 	at: https://www.twilio.com/user/account/phone-numbers/incoming  
 	select a number, then under 'Messaging', set the request url to:  
 	http://your.ip:5000/receiver   
-
+  
 4. Run the server:  
 	python server.py  
-
+  
 5. Use the interface:  
   The server operates on Flask default port 5000  
   The interface exposes the following:
