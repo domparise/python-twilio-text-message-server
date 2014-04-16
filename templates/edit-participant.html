@@ -1,0 +1,38 @@
+<html>
+<head>
+	<title>Participant</title>
+</head>
+<body>
+	<h1>Participant: {{ number }}</h1>
+	<h3>Edit one at a time, and always include password</h3>
+	<form action='/participant/{{ number }}' method='POST'>
+		Twilio Number:<input type='text' name='twilio_number_val' placeholder='Twilio phone Number'/>
+		<input type='submit' name='twilio_number'>
+		password:<input type='password' name='pwd' required><br>
+	</form>
+	<form action='/participant/{{ number }}' method='POST'>
+		Lab Target Date:<input type='text' name='lab_day_val' placeholder='YYYY-MM-DD'/>
+		<input type='submit' name='lab_day'>
+		password:<input type='password' name='pwd' required><br>
+	</form>
+	<form action='/participant/{{ number }}' method='POST'>
+		Money Target Date:<input type='text' name='money_day_val' placeholder='YYYY-MM-DD'/>
+		<input type='submit' name='money_day'>
+		password:<input type='password' name='pwd' required><br>
+	</form>
+	<form action='/participant/{{ number }}' method='POST'>
+		Send verification msg<input type='submit' name='verification' value='Send'>
+		password:<input type='password' name='pwd' required><br>
+	</form>
+	<form action='/participant/{{ number }}' method='POST'>
+		Send target day text:<input type='text' name='target_time' placeholder='HH:MM'>
+		<input type='submit' name='target' value='Send'>
+		password:<input type='password' name='pwd' required>
+	</form>
+<!--	<form action='/participant/{{ number }}' method='POST'>
+		Send email:<input type='text' name='email_val' placeholder='YYYY-MM-DD HH:MM'>
+		<input type='submit' name='email' value='Send'>
+		password:<input type='password' name='pwd'>
+	</form> -->
+</body>
+</html>
