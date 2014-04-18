@@ -72,6 +72,7 @@ def respond_to_text():
         db.log(number, 'received', request_text)
     if number in participants: # message received from a number we've recently messaged
         if is_valid_response(request_text): # valid response 
+            participants[number].num_today += 1
             participants[number].next_message()
             return
         else: # invalid response, ask for a valid answer 
@@ -136,7 +137,7 @@ def new_participant():
                 participants[phone_number] = Participant(phone_number,datetime.now(est),lab_day,money_day,txt)
                 db = Database()
                 db.new_participant(phone_number,twilio_number,request.form['lab_day'],request.form['money_day'])
-                return 'success'
+                return render_template('new-participant.html')
         return 'invalid input'
 
 @app.route('/data', methods=['GET'])
