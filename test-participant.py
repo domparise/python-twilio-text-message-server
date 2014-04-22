@@ -35,7 +35,13 @@ if p2.tmr_is_target_day():
 	print 'p2 target day'
 
 
-est = pytz.timezone('America/New_York')
-oneMin = datetime.now(est) + timedelta(minutes=1)
+oneMin = datetime.now() + timedelta(minutes=1)
 p.set_next_msg(oneMin)
 # throws error, because there is no timers to cancel
+
+# need to test to ensure timers are cancelled
+# also need to verify stops sending after 6
+
+for i in range(7):
+    
+

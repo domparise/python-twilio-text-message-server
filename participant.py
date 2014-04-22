@@ -98,6 +98,7 @@ class Participant:
 
     # spawns a thread to send a message a the given time
     def set_next_msg (self, time): #tested
+        self.on = True
         secs = (time - datetime.now()).total_seconds() 
         self.message_timer = Timer( secs, self.send_text).start()
         self.nonresponse_timer = Timer( (secs + 5400) , self.nonresponse).start() 

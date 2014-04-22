@@ -11,10 +11,8 @@ import config_vars
 from database import Database
 from participant import Participant
 from textmessenger import TextMessenger
-from emailer import Emailer
 from datetime import datetime
 from random import random
-email = Emailer()
 
 def is_valid_response(s):
     # make sure time is numeric text within 1-100 inclusive
@@ -54,7 +52,7 @@ print participants
 # txt = TextMessenger(17348884244)
 # participants[int(16169162477)] = Participant(16169162477,datetime.now(),valid_time('2014-05-03'),valid_time('2014-06-02'),txt)
 
-from flask import Flask, request, render_template
+from flask import Flask, request, Response, render_template
 import twilio.twiml
 app = Flask(__name__)
 
@@ -80,6 +78,51 @@ def respond_to_text():
             return str(resp)
     return
 
+@app.route('/', methods=['GET'])
+def display_all_data():
+    return render_template('data.html')
+
+@app.route('/sms', methods=['POST'])
+def display_sms_data():
+    if request.form['pwd'] == config_vars.interface_pwd:
+        # display the main table
+        data = db.fetch_logs()
+        csv = 'time, phone_number, event, content\n'
+        for datum in data:
+            csv +=  str(datum[0]) + ', ' + str(datum[1]) + ', ' + str(datum[2]) + ', ' + str(datum[3]) + '\n'
+        return Response(csv,mimetype="text/plain",headers={"Content-Disposition":"attachment;filename=test.txt"});
+    else return 'incorrect password'
+
+@app.route('/new-participant', methods=['GET','POST'])
+# display participant, and handle post new participant
+def new_participant():
+    if request.method == 'GET':
+        return render_template('new-participant.html')
+    else: # password = economics
+        if request.form['pwd'] == config_vars.interface_pwd:
+            # create new participant
+            lab_day = valid_time(request.form['lab_day'])
+            money_day = valid_time(request.form['money_day'])
+            phone_number = valid_number(request.form['phone'])
+            twilio_number = valid_number(request.form['twilio'])
+            if lab_day and money_day and phone_number and twilio_number:
+                txt = TextMessenger(twilio_number)
+                participants[phone_number] = Participant(phone_number,datetime.now(),lab_day,money_day,txt)
+                db = Database()
+                db.new_participant(phone_number,twilio_number,request.form['lab_day'],request.form['money_day'])
+                return render_template('new-participant.html')
+        return 'invalid input'
+
+@app.route('/participants')
+    if request.form['pwd'] == config_vars.interface_pwd:
+        # display the main table
+        csv = 'time, phone_number, event, content\n'
+        for participant in participants:
+            csv +=  str(datum[0]) + ', ' + str(datum[1]) + ', ' + str(datum[2]) + ', ' + str(datum[3]) + '\n'
+        return 
+    else return 'incorrect password'
+
+## need to implement showing current data
 @app.route('/participant/<int:number>', methods=['GET','POST'])
 def display_participant(number):
     # display participant info, and send messages
@@ -119,34 +162,6 @@ def display_participant(number):
         else:
             return 'invalid input'
 
-@app.route('/new-participant', methods=['GET','POST'])
-# display participant, and handle post new participant
-def new_participant():
-    if request.method == 'GET':
-        return render_template('new-participant.html')
-    else: # password = economics
-        if request.form['pwd'] == config_vars.interface_pwd:
-            # create new participant
-            lab_day = valid_time(request.form['lab_day'])
-            money_day = valid_time(request.form['money_day'])
-            phone_number = valid_number(request.form['phone'])
-            twilio_number = valid_number(request.form['twilio'])
-            if lab_day and money_day and phone_number and twilio_number:
-                txt = TextMessenger(twilio_number)
-                participants[phone_number] = Participant(phone_number,datetime.now(),lab_day,money_day,txt)
-                db = Database()
-                db.new_participant(phone_number,twilio_number,request.form['lab_day'],request.form['money_day'])
-                return render_template('new-participant.html')
-        return 'invalid input'
-
-@app.route('/data', methods=['GET'])
-def display_data():
-    # display the main table
-    data = db.fetch_logs()
-    csv = 'time, phone_number, event, content\n'
-    for datum in data:
-        csv +=  str(datum[0]) + ', ' + str(datum[1]) + ', ' + str(datum[2]) + ', ' + str(datum[3]) + '\n'
-    return csv
 
 @app.route('/email', methods=['GET','POST'])
 def handle_email():
@@ -166,18 +181,17 @@ def handle_email():
         db.log_email(request.form['email'],amt)
         return render_template('amount.html', amount=amt)
 
-@app.route('/send-email', methods=['GET','POST'])
-def send_email():
-    if request.method == 'GET':
-        return render_template('send-email.html')
-    else:
-        if request.form['pwd'] == config_vars.interface_pwd:
-            time = datetime.strptime(request.form['time'],'%Y-%m-%d %H:%M')
-            when = datetime(year=time.year, month=time.month, day=time.day, hour=time.hour, minute=time.minute)
-            email.email(when,request.form['email'],'the_url')
-            return 'success'
-        else:
-            return 'bad password'
+# need to implement database fetch email data
+@app.route('/email-data')
+    if request.form['pwd'] == config_vars.interface_pwd:
+        # display the main table
+        data = db.fetch_logs()
+        csv = 'time, phone_number, event, content\n'
+        for datum in data:
+            csv +=  str(datum[0]) + ', ' + str(datum[1]) + ', ' + str(datum[2]) + ', ' + str(datum[3]) + '\n'
+        return Response(csv,mimetype="text/plain",headers={"Content-Disposition":"attachment;filename=test.txt"});
+    else return 'incorrect password'
+
 
 if __name__ == "__main__":
     try:
