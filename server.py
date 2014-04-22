@@ -14,8 +14,6 @@ from textmessenger import TextMessenger
 from emailer import Emailer
 from datetime import datetime
 from random import random
-import pytz
-est = pytz.timezone('America/New_York')
 email = Emailer()
 
 def is_valid_response(s):
@@ -73,6 +71,7 @@ def respond_to_text():
     if number in participants: # message received from a number we've recently messaged
         if is_valid_response(request_text): # valid response 
             participants[number].num_today += 1
+            participants[number].expecting = False
             participants[number].next_message()
             return
         else: # invalid response, ask for a valid answer 
@@ -98,7 +97,7 @@ def display_participant(number):
             elif 'target' in request.form: # begin on target day
                 today = datetime.today()
                 time = datetime.strptime(request.form['target_time'],'%H:%M')
-                when = datetime(year=today.year, month=today.month, day=today.day, hour=time.hour, minute=time.minute, tzinfo=est)
+                when = datetime(year=today.year, month=today.month, day=today.day, hour=time.hour, minute=time.minute)
                 participants[number].set_next_msg(when)     
             else:
                 field = ''
@@ -134,7 +133,7 @@ def new_participant():
             twilio_number = valid_number(request.form['twilio'])
             if lab_day and money_day and phone_number and twilio_number:
                 txt = TextMessenger(twilio_number)
-                participants[phone_number] = Participant(phone_number,datetime.now(est),lab_day,money_day,txt)
+                participants[phone_number] = Participant(phone_number,datetime.now(),lab_day,money_day,txt)
                 db = Database()
                 db.new_participant(phone_number,twilio_number,request.form['lab_day'],request.form['money_day'])
                 return render_template('new-participant.html')
@@ -154,21 +153,18 @@ def handle_email():
     if request.method == 'GET':
         return render_template('input-email.html')
     else:
-        if db.hasnt_emailed(request.form['email']):
-            rand = random()
-            amt = ''
-            if rand < 0.25:
-                amt = '$1'
-            elif rand >= 0.25 and rand < 0.50:
-                amt = '$5'
-            elif rand >= 0.50 and rand < 0.75:
-                amt = '$25'
-            elif rand >= 0.75:
-                amt = '$125'
-            db.log_email(request.form['email'],amt)
-            return render_template('amount.html', amount=amt)
-        else:
-            return 'invalid email address'
+        rand = random()
+        amt = ''
+        if rand < 0.25:
+            amt = '$1'
+        elif rand >= 0.25 and rand < 0.50:
+            amt = '$5'
+        elif rand >= 0.50 and rand < 0.75:
+            amt = '$25'
+        elif rand >= 0.75:
+            amt = '$125'
+        db.log_email(request.form['email'],amt)
+        return render_template('amount.html', amount=amt)
 
 @app.route('/send-email', methods=['GET','POST'])
 def send_email():
@@ -177,7 +173,7 @@ def send_email():
     else:
         if request.form['pwd'] == config_vars.interface_pwd:
             time = datetime.strptime(request.form['time'],'%Y-%m-%d %H:%M')
-            when = datetime(year=time.year, month=time.month, day=time.day, hour=time.hour, minute=time.minute, tzinfo=est)
+            when = datetime(year=time.year, month=time.month, day=time.day, hour=time.hour, minute=time.minute)
             email.email(when,request.form['email'],'the_url')
             return 'success'
         else:

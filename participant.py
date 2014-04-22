@@ -2,14 +2,13 @@
 # participant model
 #
 
-import math,pytz
+import math
 from random import random
 from datetime import datetime,timedelta,date
-est = pytz.timezone('America/New_York')
 
 # -ln(RND)/p hours
 def poisson(p):
-    return math.log1p(random()) / p
+    return -( math.log(random()) / p )
 
 # time is datetime
 def add_poisson(p,time):
@@ -36,6 +35,8 @@ class Participant:
         self.lab_day = lab_day.date() # date
         self.money_day = money_day.date() # date
         self.txt = txt_messenger
+        self.on = False
+        self.expecting = False
 
     # returns time (in minutes) as the day's 'start time'
     def next_day_start_time (self): #tested
@@ -49,7 +50,7 @@ class Participant:
         tmr = date.today() + timedelta(days=1)
         self.day += 1
         self.num_today = 0
-        return datetime(year=tmr.year,month=tmr.month,day=tmr.day,hour=int(minutes/60),minute=int(minutes%60),tzinfo=est)
+        return datetime(year=tmr.year,month=tmr.month,day=tmr.day,hour=int(minutes/60),minute=int(minutes%60))
 
     # given the state of the participant in the study, determine next time to send 
     # real nasty logic, this can be improved
@@ -57,11 +58,11 @@ class Participant:
         # if after 22:00, get next_day_start_time if not target date
         # otherwise, depending on num_sent, determine next w/ poisson
         try:
-            self.message_timer.cancel()
             self.nonresponse_timer.cancel()
+            self.message_timer.cancel()
         except:
             print 'No timer to cancel'
-        now = datetime.now(est)
+        now = datetime.now()
         next = add_poisson( p_value(self.day), now)
         if next.hour >= 22: # after 10pm
             if not self.tmr_is_target_day():
@@ -73,7 +74,7 @@ class Participant:
                 elif self.tmr_is_target_day():
                     return
                 else:
-                    self.set_next_msg(add_poisson( p_value(self.day), self.next_day_start_time() ))
+                    self.set_next_msg( add_poisson( p_value(self.day), self.next_day_start_time() ))
             elif self.day < 35: # week 5
                 if self.num_today < 3:
                     self.set_next_msg(next)
@@ -88,6 +89,7 @@ class Participant:
     def send_text (self): #tested
         db.log(self.number, 'sent', 'default')
         self.txt.send_default_sms(self.number)
+        self.expecting = True
 
     def nonresponse (self): #not yet fully tested
         db.log(self.number, 'nonresponse', 'resetting_poisson_process')
@@ -96,7 +98,7 @@ class Participant:
 
     # spawns a thread to send a message a the given time
     def set_next_msg (self, time): #tested
-        secs = (time - datetime.now(est)).total_seconds() 
+        secs = (time - datetime.now()).total_seconds() 
         self.message_timer = Timer( secs, self.send_text).start()
         self.nonresponse_timer = Timer( (secs + 5400) , self.nonresponse).start() 
 

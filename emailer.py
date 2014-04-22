@@ -6,8 +6,6 @@ import smtplib
 from threading import Timer
 from datetime import datetime
 from database import Database
-import pytz
-est = pytz.timezone('America/New_York')
 
 class Emailer:
 
@@ -25,5 +23,5 @@ class Emailer:
 		db.log_email(to_addr,'sent')
 
 	def email(self, time, to_addr, url):
-		secs = (time - datetime.now(est)).total_seconds()
+		secs = (time - datetime.now()).total_seconds()
 		Timer(secs, self.email_to, (to_addr,url) ).start()
