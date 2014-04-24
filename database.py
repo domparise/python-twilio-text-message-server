@@ -28,15 +28,17 @@ class Database:
 
     # assumes valid input
     def new_participant(self, phone, twilio, lab_day, money_day):
-        # all ints
-        t = (phone, twilio, lab_day, money_day,)
-        sql_wrap('insert into participant (phone,twilio,lab_day,money_day) values (?,?,?,?)', t)
-        self.log(phone_number,'participant_joined','-')
+        sql_wrap('insert into participant (phone,twilio,lab_day,money_day) values (?,?,?,?)',(phone, twilio, lab_day, money_day,))
+        self.log(phone,'participant_joined','-')
 
     # 
     def load_participants(self):
         # initialize participants
-        return fetch_wrap('select phone,twilio,num_today,start_date,lab_day,money_day from participant')
+        res = fetch_wrap('select phone,twilio,num_today,start_date,lab_day,money_day from participant')
+        participants = list()
+        for p in res:
+            participants.append(p)
+        return participants
 
     #
     def update_participant(self, number, field, value):
@@ -48,13 +50,31 @@ class Database:
         # timestamp now, phone, event [sent|response], content
         sql_wrap('insert into log (phone, event, content) values (?,?,?)', (phone, event, content,))
 
-    #
     def fetch_logs(self):
-        return fetch_wrap('select timestamp,phone,event,content from log')
+        res = fetch_wrap('select timestamp,phone,event,content from log')
+        logs = list()
+        for log in res:
+            logs.append({
+                'timestamp': log[0],
+                'phone': log[1],
+                'event': log[2],
+                'content': log[3]
+            })
+        return logs
 
     def log_email(self,addr,amount_seen):
-        t = (addr, amount_seen,)
-        sql_wrap('insert into email (email,amount_seen) values (?,?)',t)
+        sql_wrap('insert into email (email,amount_seen) values (?,?)', (addr, amount_seen,))
+
+    def fetch_email(self):
+        res = fetch_wrap('select email,amount_seen,timestamp from email')
+        logs = list()
+        for log in res:
+            logs.append({
+                'email': log[0],
+                'amount_seen': log[1],
+                'timestamp': log[2]
+            })
+        return logs
 
     #
     def create_and_empty_tables(self):

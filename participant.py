@@ -2,18 +2,17 @@
 # participant model
 #
 
-import math
+import math,time
 from random import random
 from datetime import datetime,timedelta,date
+from threading import Timer,Thread
+from database import Database
+from textmessenger import TextMessenger
 
 # -ln(RND)/p hours
 def poisson(p):
     return -( math.log(random()) / p )
 
-import time
-from threading import Timer,Thread
-from database import Database
-from textmessenger import TextMessenger
 db = Database()
 
 class Participant:
@@ -28,6 +27,7 @@ class Participant:
         self.money_day = money_day # int
         self.message_timer = 'gonna be a thread'
         self.nonresponse_timer = 'gonna be a thread'
+        self.expecting = False
  
     # returns time (in minutes) as the day's 'start time'
     def next_day_start_time (self): #tested
@@ -48,7 +48,7 @@ class Participant:
         # if after 22:00, get next_day_start_time if not target date
         # otherwise, depending on num_sent, determine next w/ poisson
         now = datetime.now()
-        now = datetime(year=now.year,month=now.month,day=now.day,hour=12) # altered datetime for testing
+        # now = datetime(year=now.year,month=now.month,day=now.day,hour=12) # altered datetime for testing
         next = self.add_poisson( now )
         if next.hour >= 22: # after 10pm
             return self.add_poisson( self.next_day_start_time() )
@@ -71,23 +71,27 @@ class Participant:
             p = 0.25
         return time + timedelta(minutes=(poisson(p)*60))
 
+    # prepares participant (threads) for next message
     def next_message (self):
         if isinstance(self.nonresponse_timer,Thread) and self.nonresponse_timer.is_alive():
             self.nonresponse_timer.cancel()
         if isinstance(self.message_timer,Thread) and self.message_timer.is_alive():
             self.message_timer.cancel()
+        self.expecting = False
         self.set_next_msg( self.next_message_time() )
 
-    def send_text (self): #tested
+    # sends a text message to a participant
+    def send_text (self): 
         db.log(self.number, 'sent', 'default')
         self.txt.send_default_sms(self.number)
+        self.expecting = True
 
-    def nonresponse (self): #not yet fully tested
+    def nonresponse (self): 
         db.log(self.number, 'nonresponse', 'resetting_poisson_process')
         self.next_message()
 
     # spawns a thread to send a message a the given time
-    def set_next_msg (self, time): #tested
+    def set_next_msg (self, time): 
         secs = (time - datetime.now()).total_seconds() 
         self.message_timer = Timer( secs, self.send_text)
         self.nonresponse_timer = Timer( (secs + 5400) , self.nonresponse) 

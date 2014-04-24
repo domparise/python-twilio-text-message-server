@@ -5,16 +5,21 @@
 <body>
 	<h1>Data</h1>
 	<form action='/data/sms' method='POST'>
-		SMS:<input type='password' name='pwd'>
+		SMS:<input type='password' name='pwd' required placeholder='Password'>
 		<input type='submit' value='View Data'> 
 	</form>
 	<form action='/data/email' method='POST'>
-		Email:<input type='password' name='pwd'>
+		Email:<input type='password' name='pwd' required placeholder='Password'>
 		<input type='submit' value='View Data'> 
 	</form>
-	<form action='/data/participants' method='POST'>
-		Participants:<input type='password' name='pwd'>
+	<form action='/participants' method='POST'>
+		Participants:<input type='password' name='pwd' required placeholder='Password'>
 		<input type='submit' value='View Participants'> 
+	</form>
+	<form method='POST'>
+		Participant:<input type='text' name='number' required placeholder='Number'>
+		<input type='password' name='pwd' required placeholder='Password'>
+		<input type='submit' name='view' value='View' onclick='this.form.action="/participants/"+this.form.number.value;'>
 	</form>
 </body>
 </html>
