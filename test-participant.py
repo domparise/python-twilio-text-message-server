@@ -42,6 +42,4 @@ p.set_next_msg(oneMin)
 # need to test to ensure timers are cancelled
 # also need to verify stops sending after 6
 
-for i in range(7):
-    
 

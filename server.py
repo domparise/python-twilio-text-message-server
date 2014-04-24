@@ -42,7 +42,7 @@ participant_tuples = db.load_participants()
 for i in range(len(participant_tuples)):
     cur_part = participant_tuples[i]
     txtr = TextMessenger(valid_number(cur_part[1]))
-    participants[valid_number(cur_part[0])] = Participant(cur_part[0],valid_time(cur_part[2]),valid_time(cur_part[3]),valid_time(cur_part[4]),txtr)
+    participants[valid_number(cur_part[0])] = Participant(cur_part[0],valid_time(cur_part[2]),valid_time(cur_part[3]),valid_time(cur_part[4]))
     participants[valid_number(cur_part[0])].next_message()
 
 print participants
@@ -69,12 +69,13 @@ def respond_to_text():
     if number in participants: # message received from a number we've recently messaged
         if is_valid_response(request_text): # valid response 
             participants[number].num_today += 1
-            participants[number].expecting = False
             participants[number].next_message()
             return
         else: # invalid response, ask for a valid answer 
             resp = twilio.twiml.Response()
             resp.message(config_vars.invalid_sms_response)
+            print resp
+            print str(resp)
             return str(resp)
     return
 
@@ -189,7 +190,7 @@ def handle_email():
         csv = 'time, phone_number, event, content\n'
         for datum in data:
             csv +=  str(datum[0]) + ', ' + str(datum[1]) + ', ' + str(datum[2]) + ', ' + str(datum[3]) + '\n'
-        return Response(csv,mimetype="text/plain",headers={"Content-Disposition":"attachment;filename=test.txt"});
+        return Response(csv,mimetype="text/plain",headers={"Content-Disposition":"attachment;filename=test.txt"})
     else return 'incorrect password'
 
 
