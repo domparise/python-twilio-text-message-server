@@ -39,7 +39,7 @@ db = Database()
 participants = dict()
 participant_tuples = db.load_participants()
 for p in participant_tuples:
-    participants[p[0]] = Participant(p[0],p[1],p[2],p[3],p[4],p[5])
+    participants[p[0]] = Participant(p[0],p[1],p[2],valid_time(p[3]),p[4],p[5])
     participants[p[0]].next_message()
 
 from flask import Flask, request, Response, render_template
@@ -55,9 +55,16 @@ def respond_to_text():
         if participants[number].expecting:
             if is_valid_response(request_text): # valid response 
                 participants[number].num_today += 1
+                update_participant(number,'num_today',participants[number].num_today)
                 participants[number].next_message()
             else: # invalid response, ask for a valid answer 
                 return str('<?xml version="1.0" encoding="UTF-8"?><Response><Message><Body>'+config_vars.invalid_sms_response+'</Body></Message></Response>')
+        elif participants[number].expectingVerification:
+            if is_valid_response(request_text): 
+                participants[number].expectingVerification = False
+                participants[number].next_message()
+            else:
+                participants[number].send_verification()
     return
 
 @app.route('/new-participant', methods=['GET','POST'])
@@ -68,25 +75,26 @@ def new_participant():
     else: # password = economics
         if request.form['pwd'] == config_vars.interface_pwd:
             # create new participant
-            lab_day = valid_time(request.form['lab_day'])
-            money_day = valid_time(request.form['money_day'])
+            lab_day = (valid_time(request.form['lab_day']) - datetime.now()).days
+            money_day = (valid_time(request.form['money_day']) - datetime.now()).days
             phone_number = valid_number(request.form['phone'])
             twilio_number = valid_number(request.form['twilio'])
             if lab_day and money_day and phone_number and twilio_number:
-                participants[phone_number] = Participant(phone_number,datetime.now(),lab_day,money_day,txt)
+                participants[phone_number] = Participant(phone_number,twilio_number,0,datetime.now(),lab_day,money_day)
                 db = Database()
-                db.new_participant(phone_number,twilio_number,request.form['lab_day'],request.form['money_day'])
+                db.new_participant(phone_number,twilio_number,lab_day,money_day)
+                participants[phone_number].send_verification()
                 return render_template('new-participant.html')
         return 'invalid input'
 
 @app.route('/participants', methods=['POST'])
 def display_participants():
     if request.form['pwd'] == config_vars.interface_pwd:
-        # display the main table
-        csv = 'time, phone_number, event, content\n'
-        for participant in participants:
-            csv +=  str(datum[0]) + ', ' + str(datum[1]) + ', ' + str(datum[2]) + ', ' + str(datum[3]) + '\n'
-        return 
+        csv = 'phone_number, twilio_number, current_day <br>'
+        for number in participants:
+            p = participants[number]
+            csv +=  str(number) + ', ' + str(p.txt.from_number[1:]) +', '+ str(p.day) +  '<br>'
+        return csv
     else: 
         return 'incorrect password'
 
@@ -95,9 +103,7 @@ def display_participants():
 def display_participant(number):
     if request.form['pwd'] == config_vars.interface_pwd:
         if 'edit' in request.form: # show the edit form
-            return render_template('edit-participant.html', number=number)
-        elif 'verification' in request.form: # send verification text
-            participants[number].send_verification()
+            return render_template('edit-participant.html', number=number,num_today=participants[number].num_today, current_twilio=participants[number].txt.from_number, current_lab_day=participants[number].lab_day, current_money_day=participants[number].money_day)
         elif 'target' in request.form: # begin on target day
             today = datetime.today()
             time = datetime.strptime(request.form['target_time'],'%H:%M')

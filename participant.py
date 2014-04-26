@@ -82,12 +82,12 @@ class Participant:
 
     # sends a text message to a participant
     def send_text (self): 
-        db.log(self.number, 'sent', 'default')
-        self.txt.send_default_sms(self.number)
+        db.log(self.phone, 'sent', 'default')
+        self.txt.send_default_sms(self.phone)
         self.expecting = True
 
     def nonresponse (self): 
-        db.log(self.number, 'nonresponse', 'resetting_poisson_process')
+        db.log(self.phone, 'nonresponse', 'resetting_poisson_process')
         self.next_message()
 
     # spawns a thread to send a message a the given time
@@ -99,5 +99,6 @@ class Participant:
         self.nonresponse_timer.start()
 
     def send_verification (self):
-        db.log(self.number, 'sent', 'default')
-        self.txt.send_verification(self.number)
+        db.log(self.phone, 'sent', 'default')
+        self.txt.send_verification(self.phone)
+        self.expectingVerification = True

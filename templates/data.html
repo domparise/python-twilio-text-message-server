@@ -19,7 +19,8 @@
 	<form method='POST'>
 		Participant:<input type='text' name='number' required placeholder='Number'>
 		<input type='password' name='pwd' required placeholder='Password'>
-		<input type='submit' name='view' value='View' onclick='this.form.action="/participants/"+this.form.number.value;'>
+		<input type='submit' name='edit' value='View' method='POST' onclick='this.form.action="/participant/"+this.form.number.value;'>
 	</form>
+	<a href='/new-participant'>New Participant</a>
 </body>
 </html>
